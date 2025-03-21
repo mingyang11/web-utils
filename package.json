@@ -1,5 +1,5 @@
 {
-  "name": "@fuyao/web-utils",
+  "name": "fuyao-web-utils",
   "version": "1.0.0",
   "description": "JavaScript常用工具库",
   "main": "index.js",
@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/mingyang11/web-utils/issues"
   },
-  "homepage": "https://github.com/mingyang11/web-utils#readme"
+  "homepage": "https://github.com/mingyang11/web-utils#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }
