@@ -1,0 +1,22 @@
+{
+  "name": "@fuyao/web-utils",
+  "version": "1.0.0",
+  "description": "JavaScript常用工具库",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "fuyao",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mingyang11/web-utils.git"
+  },
+  "keywords": [
+    "JavaScript"
+  ],
+  "bugs": {
+    "url": "https://github.com/mingyang11/web-utils/issues"
+  },
+  "homepage": "https://github.com/mingyang11/web-utils#readme"
+}
