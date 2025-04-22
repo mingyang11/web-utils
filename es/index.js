@@ -15,6 +15,29 @@ PERFORMANCE OF THIS SOFTWARE.
 /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
 
 
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
 function __spreadArray(to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -231,4 +254,126 @@ var NumberUtil = {
     },
 };
 
-export { NumberUtil, TypeUtil };
+/**
+ * 数组工具类
+ */
+var ArrayUtil = {
+    /**
+     * 将对象数组转换为树结构的数据
+     * @param array 对象数据
+     * @param options 转换为树结构数据特征描述
+     * @param returnMap 获取数组的扁平数据
+     */
+    transToTree: function (array, options, returnMap) {
+        var _a;
+        var _b = options || {}, _c = _b.key, key = _c === void 0 ? 'key' : _c, _d = _b.pKey, pKey = _d === void 0 ? 'pKey' : _d, rootKey = _b.rootKey, _e = _b.childrenKey, childrenKey = _e === void 0 ? 'children' : _e, _f = _b.parentKey, parentKey = _f === void 0 ? 'parent' : _f, _g = _b.copy, copy = _g === void 0 ? true : _g, _h = _b.assign, assign = _h === void 0 ? true : _h, _j = _b.transKey, transKey = _j === void 0 ? false : _j, keyMap = __rest(_b, ["key", "pKey", "rootKey", "childrenKey", "parentKey", "copy", "assign", "transKey"]);
+        // 转换其他属性
+        var assignProperties = (function () {
+            var assign = copy
+                ? function (item) { return (__assign({}, item)); }
+                : function (item) { return item; };
+            transKey && key !== 'key' && (keyMap.key = key);
+            transKey && pKey !== 'pKey' && (keyMap.pKey = key);
+            return TypeUtil.isEmptyObject(keyMap)
+                ? assign
+                : (function () {
+                    var keys = Object.keys(keyMap);
+                    return function (item) {
+                        keys.forEach(function (key, index) {
+                            item[key] = item[keyMap[key]];
+                        });
+                        return assign(item);
+                    };
+                })();
+        })();
+        // 设置parent属性
+        var defineParent = (function () {
+            if (!assign)
+                return function (child, parent) {
+                    // do nothing
+                };
+            return typeof Object.defineProperty === 'function'
+                ? function (child, parent) {
+                    Object.defineProperty(child, parentKey, {
+                        get: function () {
+                            return parent;
+                        },
+                        configurable: false,
+                        enumerable: false,
+                    });
+                }
+                : function (child, parent) {
+                    child.getParent = function () { return parent; };
+                };
+        })();
+        var ROOT_KEY = '__root__';
+        // 按照父节点Id分组
+        var groups = (_a = {},
+            // 缓存根节点
+            _a[ROOT_KEY] = [],
+            _a);
+        // 数据扁平化
+        var originalMap = {};
+        var mergedMap = {};
+        var isInvalidPk = function (pk) { return !pk && pk !== 0; };
+        // 遍历数组进行分组
+        (Array.isArray(array) ? array : [])
+            .map(function (item) {
+            var newItem = assignProperties(item);
+            var pk = newItem[pKey];
+            var k = newItem[key];
+            originalMap[k] = __assign({}, newItem);
+            mergedMap[k] = newItem;
+            if (isInvalidPk(pk)) {
+                groups[ROOT_KEY].push(newItem);
+            }
+            else if (groups[pk]) {
+                groups[pk].push(newItem);
+            }
+            else {
+                groups[pk] = [newItem];
+            }
+            return newItem;
+        })
+            .forEach(function (item) {
+            item[childrenKey] = groups[item[key]];
+            delete groups[item[key]];
+            var pk = item[pKey];
+            defineParent(item, isInvalidPk(pk) ? null : mergedMap[pk]);
+        });
+        var _k = groups, _l = ROOT_KEY, children = _k[_l], others = __rest(_k, [_l + ""]);
+        var m = typeof options === 'function'
+            ? options
+            : typeof returnMap === 'function'
+                ? returnMap
+                : undefined;
+        m && m(mergedMap, originalMap);
+        // 有指定根节点
+        return !TypeUtil.isEmpty(rootKey)
+            ? groups[rootKey] || []
+            : children.concat.apply(children, Object.values(others));
+    },
+    /**
+     * 转换对象数组的元素属性
+     * @param array 被转换的数组
+     * @param options { keyMap: 属性名映射对象，key 为新属性名 value 为原始属性名; recursive: 是否递归; childrenKey: 需要递归的属性名; delOriginalKey: 删除原始属性名 }
+     */
+    transItemProps: function (array, options) {
+        var keyMap = options.keyMap, _a = options.recursive, recursive = _a === void 0 ? true : _a, _b = options.childrenKey, childrenKey = _b === void 0 ? 'children' : _b, _c = options.delOriginalKey, delOriginalKey = _c === void 0 ? true : _c;
+        return array.map(function (item) {
+            // 遍历字段
+            Object.keys(keyMap).forEach(function (key) {
+                item[key] = item[keyMap[key]];
+                delOriginalKey && delete item[keyMap[key]];
+            });
+            var children = item[childrenKey];
+            // 递归
+            recursive &&
+                TypeUtil.isArray(children) &&
+                (item[childrenKey] = ArrayUtil.transItemProps(children, options));
+            return item;
+        });
+    },
+};
+
+export { ArrayUtil, NumberUtil, TypeUtil };
