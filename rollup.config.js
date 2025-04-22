@@ -1,10 +1,11 @@
 const clear = require('rollup-plugin-clear');
+const typescript = require('rollup-plugin-typescript2');
 
 /**
  * @type {import('rollup').RollupOptions}
  */
 module.exports = {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   output: [
     {
       file: 'es/index.js',
@@ -24,6 +25,10 @@ module.exports = {
     clear({
       targets: ['dist', 'es', 'lib'],
       watch: true,
+    }),
+    typescript({
+      tsconfig: 'tsconfig.json',
+      useTsconfigDeclarationDir: true,
     }),
   ],
 };
