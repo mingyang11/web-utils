@@ -1,5 +1,6 @@
 const clear = require('rollup-plugin-clear');
 const typescript = require('rollup-plugin-typescript2');
+const terser = require('@rollup/plugin-terser');
 
 /**
  * @type {import('rollup').RollupOptions}
@@ -30,5 +31,6 @@ module.exports = {
       tsconfig: 'tsconfig.json',
       useTsconfigDeclarationDir: true,
     }),
+    terser(),
   ],
 };
